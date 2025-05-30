@@ -28,7 +28,7 @@ app.post('/api/users', (req, res) => {
 	
 // Store user
 	usersDatabase[userId] = {
-		username: username,
+		username: userNameInput,
 		count: 0,
 		_id: userId,
 		log: []
@@ -53,25 +53,40 @@ app.get('/api/users', (req, res) => {
 //post to see below with form data description, duration and optionnaly date
 //The response returned from POST /api/users/:_id/exercises will be the user object with the exercise fields added.
 app.post('/api/users/:_id/exercises', (req, res) => {
-    const userId = req.body._id;
+    const userId = req.params._id;
 	const user = usersDatabase[userId];
 	
 	if (!user) {
     return res.status(404).json({ error: "User not found" });
 	}
 
-	
+	// handle description and force it to be a string
     const description = req.body.description;
+    if (!description || typeof description !== 'string') {
+        return res.status(400).json({ error: "Description is required" });
+    }
+
+
+    // handle duration and check if it's a positive number
 	const duration = parseInt(req.body.duration);
+    if (isNaN(duration) || duration <= 0) {
+        return res.status(400).json({ error: "Duration must be a positive number" });
+    }
+
+
 	let date = req.body.date;
 	if (!date) {
 		date = new Date();
 	}
+    if (req.body.date && isNaN(date.getTime())) {
+        return res.status(400).json({ error: "Invalid date format" });
+    }
 	const exercise = {
 		description,
 		duration,
 		date: date.toDateString()
 	};
+
 	// add info into the semi database and count number of exercice
 	user.log.push(exercise);
 	user.count++;
@@ -128,9 +143,11 @@ app.get('/api/users/:_id/logs', (req, res) => {
 	
   
 	res.json({
-    count: user.count,
-    log: logs
-  });
+        _id: user._id,
+        username: user.username,
+        count: logs.length,
+        log: logs
+    });
 });
 
  module.exports = app;

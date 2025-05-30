@@ -74,17 +74,17 @@ app.post('/api/users/:_id/exercises', (req, res) => {
     }
 
 
-	let date = req.body.date;
-	if (!date) {
-		date = new Date();
-	}
+	let date = req.body.date ? new Date(req.body.date) : new Date();
+
     if (req.body.date && isNaN(date.getTime())) {
         return res.status(400).json({ error: "Invalid date format" });
     }
+    const formattedDate = date.toDateString();
+    
 	const exercise = {
 		description,
 		duration,
-		date: date.toDateString()
+		date: formattedDate
 	};
 
 	// add info into the semi database and count number of exercice
